@@ -1,0 +1,13 @@
+{"kind":"O","text":"Invoking: tsup src/index.ts --format esm --dts --sourcemap --clean \n"}
+{"kind":"O","text":"\u001b[34mCLI\u001b[39m Building entry: src/index.ts\n"}
+{"kind":"O","text":"\u001b[34mCLI\u001b[39m Using tsconfig: tsconfig.json\n"}
+{"kind":"O","text":"\u001b[34mCLI\u001b[39m tsup v8.5.1\n"}
+{"kind":"O","text":"\u001b[34mCLI\u001b[39m Target: es2022\n"}
+{"kind":"O","text":"\u001b[34mCLI\u001b[39m Cleaning output folder\n"}
+{"kind":"O","text":"\u001b[34mESM\u001b[39m Build start\n"}
+{"kind":"O","text":"\u001b[32mESM\u001b[39m \u001b[1mdist\\index.js     \u001b[22m\u001b[32m590.00 B\u001b[39m\n"}
+{"kind":"O","text":"\u001b[32mESM\u001b[39m \u001b[1mdist\\index.js.map \u001b[22m\u001b[32m1.14 KB\u001b[39m\n"}
+{"kind":"O","text":"\u001b[32mESM\u001b[39m ⚡️ Build success in 8920ms\n"}
+{"kind":"O","text":"\u001b[34mDTS\u001b[39m Build start\n"}
+{"kind":"O","text":"\u001b[32mDTS\u001b[39m ⚡️ Build success in 46428ms\n"}
+{"kind":"O","text":"\u001b[32mDTS\u001b[39m \u001b[1mdist\\index.d.ts \u001b[22m\u001b[32m349.00 B\u001b[39m\n"}

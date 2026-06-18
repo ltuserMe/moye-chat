@@ -1,0 +1,72 @@
+/**
+ * This is the main configuration file for Rush.
+ * The baseline was generated with `npx @microsoft/rush@5.155.0 init`.
+ */
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/rush/v5/rush.schema.json",
+  "rushVersion": "5.155.0",
+  "pnpmVersion": "10.18.3",
+  "nodeSupportedVersionRange": ">=20.18.0 <23.0.0",
+  "suppressNodeLtsWarning": true,
+  "projectFolderMinDepth": 2,
+  "projectFolderMaxDepth": 2,
+  "eventHooks": {
+    "preRushInstall": [],
+    "postRushInstall": [],
+    "preRushBuild": [],
+    "postRushBuild": [],
+    "preRushx": [],
+    "postRushx": []
+  },
+  "variants": [],
+  "projects": [
+    {
+      "packageName": "@agent-chat/web",
+      "projectFolder": "apps/web",
+      "reviewCategory": "production",
+      "tags": ["app-web"]
+    },
+    {
+      "packageName": "@agent-chat/mobile",
+      "projectFolder": "apps/mobile",
+      "reviewCategory": "production",
+      "tags": ["app-mobile"]
+    },
+    {
+      "packageName": "@agent-chat/chat-core",
+      "projectFolder": "packages/chat-core",
+      "reviewCategory": "production",
+      "tags": ["runtime"]
+    },
+    {
+      "packageName": "@agent-chat/chat-sdk",
+      "projectFolder": "packages/chat-sdk",
+      "reviewCategory": "production",
+      "tags": ["runtime"]
+    },
+    {
+      "packageName": "@agent-chat/ui-web",
+      "projectFolder": "packages/ui-web",
+      "reviewCategory": "production",
+      "tags": ["ui-web"]
+    },
+    {
+      "packageName": "@agent-chat/ui-mobile",
+      "projectFolder": "packages/ui-mobile",
+      "reviewCategory": "production",
+      "tags": ["ui-mobile"]
+    },
+    {
+      "packageName": "@agent-chat/types",
+      "projectFolder": "packages/types",
+      "reviewCategory": "production",
+      "tags": ["shared"]
+    },
+    {
+      "packageName": "@agent-chat/utils",
+      "projectFolder": "packages/utils",
+      "reviewCategory": "production",
+      "tags": ["shared"]
+    }
+  ]
+}

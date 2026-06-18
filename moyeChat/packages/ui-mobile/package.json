@@ -1,0 +1,32 @@
+{
+  "name": "@agent-chat/ui-mobile",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --sourcemap --clean --external react --external react-native",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@agent-chat/chat-core": "workspace:*",
+    "react-native-markdown-display": "^7.0.2"
+  },
+  "peerDependencies": {
+    "react": ">=19",
+    "react-native": ">=0.85"
+  },
+  "devDependencies": {
+    "@types/react": "~19.2.2",
+    "tsup": "^8.5.0",
+    "typescript": "~6.0.3"
+  }
+}

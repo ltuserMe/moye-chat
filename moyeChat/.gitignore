@@ -1,0 +1,16 @@
+.DS_Store
+Thumbs.db
+node_modules/
+common/temp/
+common/autoinstallers/*/node_modules/
+dist/
+build/
+.turbo/
+.next/
+.expo/
+coverage/
+*.log
+*.tsbuildinfo
+.env
+.env.*
+!.env.example

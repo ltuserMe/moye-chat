@@ -1,0 +1,17 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/rush/v5/common-versions.schema.json",
+  "preferredVersions": {
+    "tsup": "^8.5.0",
+    "zustand": "^5.0.0"
+  },
+  "implicitlyPreferredVersions": false,
+  "ensureConsistentVersions": true,
+  "allowedAlternativeVersions": {
+    "react": ["19.2.3", "19.2.4"],
+    "react-dom": ["19.2.3", "19.2.4"],
+    "typescript": ["~6.0.3", "^5"],
+    "@types/node": ["^20", "^24.0.0"],
+    "@types/react": ["~19.2.2", "^19"],
+    "@types/react-dom": ["~19.2.2", "^19"]
+  }
+}
