@@ -25,7 +25,7 @@ export function selectMessage(state: ChatState, messageId: MessageId): ChatMessa
 }
 
 export function selectConversations(state: ChatState): readonly Conversation[] {
-  return Object.values(state.conversations).toSorted((left, right) =>
+  return [...Object.values(state.conversations)].sort((left: Conversation, right: Conversation) =>
     right.updatedAt.localeCompare(left.updatedAt)
   );
 }

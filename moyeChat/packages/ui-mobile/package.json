@@ -26,6 +26,8 @@
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
+    "react": "19.2.3",
+    "react-native": "0.85.3",
     "tsup": "^8.5.0",
     "typescript": "~6.0.3"
   }

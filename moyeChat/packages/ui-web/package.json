@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@agent-chat/chat-core": "workspace:*",
+    "@heroicons/react": "^2.2.0",
     "@lobehub/fluent-emoji": "^4.1.0",
     "@lobehub/icons": "^5.10.0",
     "@lobehub/ui": "^5.15.16",

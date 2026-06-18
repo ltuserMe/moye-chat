@@ -9,14 +9,11 @@ const roleMap: Record<CoreChatMessage["role"], LobeChatMessage["role"]> = {
 };
 
 export function toLobeChatMessage(message: CoreChatMessage): LobeChatMessage {
-  const createdAt = Date.parse(message.createdAt);
-  const updatedAt = Date.parse(message.updatedAt);
-
   return {
     id: message.id,
     content: message.content,
-    createAt: Number.isFinite(createdAt) ? createdAt : Date.now(),
-    updateAt: Number.isFinite(updatedAt) ? updatedAt : Date.now(),
+    createAt: 0,
+    updateAt: 0,
     role: roleMap[message.role],
     meta: {
       title: titleByRole[message.role],
@@ -33,15 +30,15 @@ export function toLobeChatMessage(message: CoreChatMessage): LobeChatMessage {
 }
 
 const titleByRole: Record<CoreChatMessage["role"], string> = {
-  assistant: "Assistant",
-  system: "System",
-  tool: "Tool",
-  user: "You"
+  assistant: "助手",
+  system: "系统",
+  tool: "工具",
+  user: "你"
 };
 
 const avatarByRole: Record<CoreChatMessage["role"], string> = {
-  assistant: "AI",
-  system: "S",
-  tool: "T",
-  user: "U"
+  assistant: "助",
+  system: "系",
+  tool: "工",
+  user: "你"
 };

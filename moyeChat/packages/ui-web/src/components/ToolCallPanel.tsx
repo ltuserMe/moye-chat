@@ -1,131 +1,210 @@
 "use client";
 
-import type { ChatMessage, ToolCall } from "@agent-chat/chat-core";
+import type { ChatMessage, ToolCall, ToolCallStatus } from "@agent-chat/chat-core";
 import { Tag, Text } from "@lobehub/ui";
+import { AlertCircle, CheckCircle2, Clock3, Loader2, Wrench } from "lucide-react";
 import { useMemo } from "react";
 
 interface ToolCallPanelProps {
   messages: readonly ChatMessage[];
 }
 
+interface ToolCallEntry {
+  messageId: string;
+  toolCall: ToolCall;
+}
+
+const statusMeta: Record<
+  ToolCallStatus,
+  {
+    color: "blue" | "cyan" | "green" | "red";
+    icon: typeof Clock3;
+    label: string;
+  }
+> = {
+  done: { color: "green", icon: CheckCircle2, label: "已完成" },
+  failed: { color: "red", icon: AlertCircle, label: "失败" },
+  pending: { color: "cyan", icon: Clock3, label: "等待中" },
+  running: { color: "blue", icon: Loader2, label: "运行中" }
+};
+
 export function ToolCallPanel({ messages }: ToolCallPanelProps) {
-  const toolCalls = useMemo(
+  const entries = useMemo<ToolCallEntry[]>(
     () =>
       messages.flatMap((message) =>
-        message.toolCalls.map((toolCall) => ({ ...toolCall, messageId: message.id }))
+        message.toolCalls.map((toolCall) => ({
+          messageId: message.id,
+          toolCall
+        }))
       ),
     [messages]
   );
 
+  if (entries.length === 0) {
+    return null;
+  }
+
   return (
     <aside style={styles.panel}>
-      <div style={styles.panelHeader}>
-        <Text strong>Tool calls</Text>
-        <Tag color="blue">{toolCalls.length}</Tag>
-      </div>
+      <header style={styles.header}>
+        <div style={styles.titleRow}>
+          <Wrench size={16} strokeWidth={2.2} />
+          <Text strong style={styles.title}>工具调用</Text>
+        </div>
+        <Tag color="blue">{entries.length}</Tag>
+      </header>
 
-      <div style={styles.panelList}>
-        {toolCalls.map((toolCall) => (
-          <ToolCallCard key={`${toolCall.messageId}-${toolCall.id}`} toolCall={toolCall} />
+      <div style={styles.list}>
+        {entries.map(({ messageId, toolCall }) => (
+          <ToolCallCard key={`${messageId}-${toolCall.id}`} toolCall={toolCall} />
         ))}
       </div>
     </aside>
   );
 }
 
-export function InlineToolCalls({ toolCalls }: { toolCalls: readonly ToolCall[] }) {
-  if (toolCalls.length === 0) {
-    return null;
+function ToolCallCard({ toolCall }: { toolCall: ToolCall }) {
+  const meta = statusMeta[toolCall.status];
+  const StatusIcon = meta.icon;
+
+  return (
+    <article style={styles.card}>
+      <div style={styles.cardHeader}>
+        <div style={styles.nameRow}>
+          <StatusIcon size={15} strokeWidth={2.2} style={toolCall.status === "running" ? styles.spin : undefined} />
+          <span style={styles.toolName}>{toolCall.name}</span>
+        </div>
+        <Tag color={meta.color}>{meta.label}</Tag>
+      </div>
+
+      {toolCall.argumentsText ? <CodeBlock label="参数" value={toolCall.argumentsText} /> : null}
+      {toolCall.result !== undefined ? <CodeBlock label="结果" value={formatJsonValue(toolCall.result)} /> : null}
+      {toolCall.error ? <CodeBlock danger label="错误" value={toolCall.error} /> : null}
+    </article>
+  );
+}
+
+function CodeBlock({ danger, label, value }: { danger?: boolean; label: string; value: string }) {
+  return (
+    <div style={styles.block}>
+      <div style={danger ? styles.blockLabelDanger : styles.blockLabel}>{label}</div>
+      <pre style={danger ? styles.errorCode : styles.code}>{value}</pre>
+    </div>
+  );
+}
+
+function formatJsonValue(value: unknown): string {
+  if (typeof value === "string") {
+    return value;
   }
 
-  return (
-    <div style={styles.inlineList}>
-      {toolCalls.map((toolCall) => (
-        <ToolCallCard key={toolCall.id} toolCall={toolCall} compact />
-      ))}
-    </div>
-  );
+  return JSON.stringify(value, null, 2);
 }
-
-function ToolCallCard({ toolCall, compact = false }: { toolCall: ToolCall; compact?: boolean }) {
-  return (
-    <div style={{ ...styles.card, padding: compact ? 10 : 12 }}>
-      <div style={styles.cardHeader}>
-        <Text strong>{toolCall.name}</Text>
-        <Tag color={statusColor[toolCall.status]}>{toolCall.status}</Tag>
-      </div>
-      {toolCall.argumentsText === undefined ? null : <code style={styles.code}>{toolCall.argumentsText}</code>}
-      {toolCall.result === undefined ? null : (
-        <code style={styles.result}>{JSON.stringify(toolCall.result, null, 2)}</code>
-      )}
-      {toolCall.error === undefined ? null : <Text type="danger">{toolCall.error}</Text>}
-    </div>
-  );
-}
-
-const statusColor: Record<ToolCall["status"], "blue" | "green" | "red" | "gold"> = {
-  pending: "gold",
-  running: "blue",
-  done: "green",
-  failed: "red"
-};
 
 const styles = {
   panel: {
-    background: "#ffffff",
+    background: "#f8fafc",
     borderLeft: "1px solid #e5e7eb",
     display: "grid",
     gridTemplateRows: "auto minmax(0, 1fr)",
     minHeight: 0,
-    padding: 16,
-    width: 336
+    width: 320
   },
-  panelHeader: {
+  header: {
     alignItems: "center",
+    borderBottom: "1px solid #e5e7eb",
     display: "flex",
     justifyContent: "space-between",
-    marginBottom: 16
+    padding: "18px 18px 14px"
   },
-  panelList: {
+  titleRow: {
+    alignItems: "center",
+    color: "#111827",
     display: "flex",
-    flexDirection: "column" as const,
-    gap: 10,
-    minHeight: 0,
-    overflowY: "auto" as const
-  },
-  inlineList: {
-    display: "grid",
-    gap: 8,
-    marginTop: 10
-  },
-  card: {
-    background: "#f9fafb",
-    border: "1px solid #e5e7eb",
-    borderRadius: 8,
-    display: "grid",
     gap: 8
   },
+  title: {
+    fontSize: 14
+  },
+  list: {
+    display: "grid",
+    gap: 12,
+    minHeight: 0,
+    overflowY: "auto" as const,
+    padding: 16
+  },
+  card: {
+    background: "#ffffff",
+    border: "1px solid #e2e8f0",
+    borderRadius: 8,
+    boxShadow: "0 8px 22px rgba(15,23,42,0.04)",
+    display: "grid",
+    gap: 12,
+    padding: 14
+  },
   cardHeader: {
-    alignItems: "center",
+    alignItems: "flex-start",
     display: "flex",
+    gap: 10,
     justifyContent: "space-between"
   },
-  code: {
-    background: "#111827",
-    borderRadius: 6,
-    color: "#f9fafb",
-    display: "block",
-    maxWidth: "100%",
-    overflowX: "auto" as const,
-    padding: 8
+  nameRow: {
+    alignItems: "center",
+    color: "#0f172a",
+    display: "flex",
+    gap: 8,
+    minWidth: 0
   },
-  result: {
-    background: "#eef7f1",
+  toolName: {
+    fontSize: 13,
+    fontWeight: 700,
+    overflowWrap: "anywhere" as const
+  },
+  block: {
+    display: "grid",
+    gap: 6
+  },
+  blockLabel: {
+    color: "#64748b",
+    fontSize: 11,
+    fontWeight: 700
+  },
+  blockLabelDanger: {
+    color: "#b91c1c",
+    fontSize: 11,
+    fontWeight: 700
+  },
+  code: {
+    background: "#f8fafc",
+    border: "1px solid #e2e8f0",
     borderRadius: 6,
-    color: "#155724",
-    display: "block",
-    maxWidth: "100%",
-    overflowX: "auto" as const,
-    padding: 8
+    color: "#334155",
+    fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+    fontSize: 11,
+    lineHeight: 1.55,
+    margin: 0,
+    maxHeight: 180,
+    overflow: "auto" as const,
+    padding: 10,
+    whiteSpace: "pre-wrap" as const,
+    wordBreak: "break-word" as const
+  },
+  errorCode: {
+    background: "#fef2f2",
+    border: "1px solid #fecaca",
+    borderRadius: 6,
+    color: "#991b1b",
+    fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+    fontSize: 11,
+    lineHeight: 1.55,
+    margin: 0,
+    maxHeight: 180,
+    overflow: "auto" as const,
+    padding: 10,
+    whiteSpace: "pre-wrap" as const,
+    wordBreak: "break-word" as const
+  },
+  spin: {
+    animation: "tool-call-spin 1s linear infinite"
   }
 };

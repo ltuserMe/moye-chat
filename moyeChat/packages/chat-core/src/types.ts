@@ -71,6 +71,20 @@ export interface CreateConversationInput {
   now?: ISODateTime;
 }
 
+export interface UpdateConversationInput {
+  id: ConversationId;
+  title?: string;
+  metadata?: JsonObject;
+}
+
+export interface UpdateMessageInput {
+  id: MessageId;
+  content?: string;
+  status?: MessageStatus;
+  metadata?: JsonObject;
+  updatedAt?: ISODateTime;
+}
+
 export interface CreateMessageInput {
   id?: MessageId;
   conversationId: ConversationId;
@@ -134,8 +148,12 @@ export type StreamEvent =
 
 export type ChatAction =
   | { type: "conversation/create"; input: CreateConversationInput }
+  | { type: "conversation/delete"; conversationId: ConversationId }
+  | { type: "conversation/update"; input: UpdateConversationInput }
   | { type: "conversation/set-active"; conversationId: ConversationId }
   | { type: "message/add"; input: CreateMessageInput }
+  | { type: "message/delete"; messageId: MessageId }
+  | { type: "message/update"; input: UpdateMessageInput }
   | { type: "stream/apply"; event: StreamEvent }
   | { type: "request/start"; conversationId: ConversationId; requestId: RequestId }
   | { type: "request/finish"; conversationId: ConversationId; requestId: RequestId };

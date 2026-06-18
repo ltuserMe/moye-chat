@@ -19,7 +19,11 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@agent-chat/chat-core": ["../../packages/chat-core/src/index.ts"],
+      "@agent-chat/types": ["../../packages/types/src/index.ts"],
+      "@agent-chat/ui-web": ["../../packages/ui-web/src/index.ts"],
+      "@agent-chat/utils": ["../../packages/utils/src/index.ts"]
     }
   },
   "include": [

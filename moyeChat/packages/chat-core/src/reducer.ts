@@ -24,10 +24,33 @@ export function chatReducer(state: ChatState = createInitialChatState(), action:
         activeConversationId: action.conversationId
       };
 
+    case "conversation/delete":
+      return deleteConversation(state, action.conversationId);
+
+    case "conversation/update":
+      return updateConversation(state, action.input.id, (conversation) => ({
+        ...conversation,
+        metadata: action.input.metadata ?? conversation.metadata,
+        title: action.input.title ?? conversation.title,
+        updatedAt: nowIso()
+      }));
+
     case "message/add": {
       const message = createMessage(action.input);
       return upsertMessage(state, message);
     }
+
+    case "message/delete":
+      return deleteMessage(state, action.messageId);
+
+    case "message/update":
+      return updateMessage(state, action.input.id, (message) => ({
+        ...message,
+        content: action.input.content ?? message.content,
+        metadata: action.input.metadata ?? message.metadata,
+        status: action.input.status ?? message.status,
+        updatedAt: action.input.updatedAt ?? nowIso()
+      }));
 
     case "request/start":
       return updateConversation(state, action.conversationId, (conversation) => ({
@@ -147,6 +170,37 @@ export function applyStreamEvent(state: ChatState, event: StreamEvent): ChatStat
   }
 }
 
+function deleteConversation(state: ChatState, conversationId: Conversation["id"]): ChatState {
+  const conversation = state.conversations[conversationId];
+  if (conversation === undefined) {
+    return state;
+  }
+
+  const conversations = { ...state.conversations };
+  delete conversations[conversationId];
+
+  const messages = { ...state.messages };
+  conversation.messageIds.forEach((messageId) => {
+    delete messages[messageId];
+  });
+
+  const requestIdsByConversation = { ...state.requestIdsByConversation };
+  delete requestIdsByConversation[conversationId];
+
+  const nextActiveConversationId =
+    state.activeConversationId === conversationId
+      ? Object.values(conversations).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0]?.id
+      : state.activeConversationId;
+
+  return {
+    ...state,
+    activeConversationId: nextActiveConversationId,
+    conversations,
+    messages,
+    requestIdsByConversation
+  };
+}
+
 function upsertConversation(
   state: ChatState,
   conversation: Conversation,
@@ -191,6 +245,33 @@ function upsertMessage(state: ChatState, message: ChatMessage): ChatState {
       [message.id]: message
     },
     activeConversationId: state.activeConversationId ?? updatedConversation.id
+  };
+}
+
+function deleteMessage(state: ChatState, messageId: MessageId): ChatState {
+  const message = state.messages[messageId];
+  if (message === undefined) {
+    return state;
+  }
+
+  const messages = { ...state.messages };
+  delete messages[messageId];
+
+  const conversation = state.conversations[message.conversationId];
+  return {
+    ...state,
+    conversations:
+      conversation === undefined
+        ? state.conversations
+        : {
+            ...state.conversations,
+            [conversation.id]: {
+              ...conversation,
+              messageIds: conversation.messageIds.filter((id) => id !== messageId),
+              updatedAt: nowIso()
+            }
+          },
+    messages
   };
 }
 

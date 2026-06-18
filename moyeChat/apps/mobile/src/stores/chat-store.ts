@@ -1,10 +1,13 @@
 import {
+  type ChatAttachment,
   chatReducer,
   createConversation as createCoreConversation,
   createMessage,
+  selectConversations,
   selectConversationMessages,
   type ChatMessage,
   type ChatState,
+  type Conversation,
   type ConversationId,
   type RequestId
 } from '@agent-chat/chat-core';
@@ -16,13 +19,18 @@ import { createConfiguredChatSdk } from '@/lib/chatSdk';
 
 interface ChatStore {
   core: ChatState;
+  conversations: readonly Conversation[];
   activeConversationId?: ConversationId;
   activeMessages: readonly ChatMessage[];
   inputValue: string;
+  inputAttachments: readonly ChatAttachment[];
   isSending: boolean;
   activeRequestId?: RequestId;
   activeSubscription?: StreamSubscription;
   setInputValue(value: string): void;
+  setInputAttachments(attachments: readonly ChatAttachment[]): void;
+  createConversation(): void;
+  selectConversation(conversationId: ConversationId): void;
   send(): void;
   cancel(): void;
 }
@@ -35,24 +43,49 @@ const initialCore = chatReducer(undefined, {
 
 export const useChatStore = create<ChatStore>((set, get) => ({
   core: initialCore,
+  conversations: selectConversations(initialCore),
   activeConversationId: initialCore.activeConversationId,
   activeMessages:
     initialCore.activeConversationId === undefined
       ? []
       : selectConversationMessages(initialCore, initialCore.activeConversationId),
   inputValue: '',
+  inputAttachments: [],
   isSending: false,
 
   setInputValue(value) {
     set({ inputValue: value });
   },
 
+  setInputAttachments(attachments) {
+    set({ inputAttachments: attachments });
+  },
+
+  createConversation() {
+    const nextCore = chatReducer(get().core, {
+      type: 'conversation/create',
+      input: {
+        title: '新对话'
+      }
+    });
+    set(deriveState(nextCore, { inputValue: '', inputAttachments: [] }));
+  },
+
+  selectConversation(conversationId) {
+    const nextCore = chatReducer(get().core, {
+      type: 'conversation/set-active',
+      conversationId
+    });
+    set(deriveState(nextCore, { inputValue: '', inputAttachments: [] }));
+  },
+
   send() {
     const state = get();
     const conversationId = state.activeConversationId;
     const content = state.inputValue.trim();
+    const attachments = state.inputAttachments;
 
-    if (conversationId === undefined || content.length === 0 || state.isSending) {
+    if (conversationId === undefined || (content.length === 0 && attachments.length === 0) || state.isSending) {
       return;
     }
 
@@ -60,6 +93,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       conversationId,
       role: 'user',
       content,
+      attachments,
       status: 'complete'
     });
 
@@ -67,7 +101,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       type: 'message/add',
       input: userMessage
     });
-    set(deriveState(nextCore, { inputValue: '', isSending: true }));
+    set(deriveState(nextCore, { inputValue: '', inputAttachments: [], isSending: true }));
 
     try {
       const sdk = createConfiguredChatSdk();
@@ -75,6 +109,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         {
           conversationId,
           content,
+          attachments,
           history: selectConversationMessages(nextCore, conversationId)
         },
         {
@@ -129,6 +164,7 @@ function deriveState(core: ChatState, extra: Partial<ChatStore> = {}): Partial<C
 
   return {
     core,
+    conversations: selectConversations(core),
     activeConversationId,
     activeMessages:
       activeConversationId === undefined ? [] : selectConversationMessages(core, activeConversationId),
