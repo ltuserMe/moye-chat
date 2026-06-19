@@ -18,7 +18,9 @@
   },
   "dependencies": {
     "@agent-chat/chat-core": "workspace:*",
-    "react-native-markdown-display": "^7.0.2"
+    "react-native-markdown-display": "^7.0.2",
+    "lucide-react-native": "~1.21.0",
+    "react-native-svg": "~15.15.5"
   },
   "peerDependencies": {
     "react": ">=19",

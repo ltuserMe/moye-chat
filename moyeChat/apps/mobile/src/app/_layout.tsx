@@ -10,6 +10,9 @@ export default function TabLayout() {
       <AnimatedSplashOverlay />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
+        <Stack.Screen name="chat/[conversationId]" />
+        <Stack.Screen name="settings" />
+        <Stack.Screen name="attachments/[id]" />
       </Stack>
     </ThemeProvider>
   );

@@ -1,63 +1,33 @@
-import type { ChatAttachment } from '@agent-chat/chat-core';
-import { MobileChatScreen } from '@agent-chat/ui-mobile';
-import * as DocumentPicker from 'expo-document-picker';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { createId } from '@agent-chat/utils';
+import { useRouter } from 'expo-router';
+import { useEffect } from 'react';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
-import { useChatStore } from '@/stores/chat-store';
+import { ensureConversation } from '@/controllers/chat-controller';
+import { tokens } from '@/theme/tokens';
 
 export default function HomeScreen() {
-  const conversations = useChatStore((state) => state.conversations);
-  const activeConversationId = useChatStore((state) => state.activeConversationId);
-  const messages = useChatStore((state) => state.activeMessages);
-  const inputValue = useChatStore((state) => state.inputValue);
-  const inputAttachments = useChatStore((state) => state.inputAttachments);
-  const isSending = useChatStore((state) => state.isSending);
-  const setInputValue = useChatStore((state) => state.setInputValue);
-  const setInputAttachments = useChatStore((state) => state.setInputAttachments);
-  const createConversation = useChatStore((state) => state.createConversation);
-  const selectConversation = useChatStore((state) => state.selectConversation);
-  const send = useChatStore((state) => state.send);
-  const cancel = useChatStore((state) => state.cancel);
+  const router = useRouter();
 
-  const pickAttachments = async () => {
-    const result = await DocumentPicker.getDocumentAsync({
-      copyToCacheDirectory: true,
-      multiple: true
+  useEffect(() => {
+    const conversationId = ensureConversation();
+    router.replace({
+      pathname: '/chat/[conversationId]',
+      params: { conversationId }
     });
-
-    if (result.canceled) {
-      return;
-    }
-
-    const pickedAttachments: ChatAttachment[] = result.assets.map((asset) => ({
-      id: createId('att'),
-      mimeType: asset.mimeType ?? 'application/octet-stream',
-      name: asset.name,
-      size: asset.size,
-      url: asset.uri
-    }));
-
-    setInputAttachments([...inputAttachments, ...pickedAttachments]);
-  };
+  }, [router]);
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
-      <MobileChatScreen
-        attachments={inputAttachments}
-        conversationId={activeConversationId}
-        conversations={conversations}
-        inputValue={inputValue}
-        isSending={isSending}
-        messages={messages}
-        onAttachmentsChange={setInputAttachments}
-        onCancel={cancel}
-        onCreateConversation={createConversation}
-        onInputChange={setInputValue}
-        onPickAttachments={pickAttachments}
-        onSelectConversation={selectConversation}
-        onSend={send}
-      />
-    </SafeAreaView>
+    <View style={styles.root}>
+      <ActivityIndicator color={tokens.color.accent} />
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    alignItems: 'center',
+    backgroundColor: tokens.color.chat,
+    flex: 1,
+    justifyContent: 'center'
+  }
+});

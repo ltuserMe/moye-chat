@@ -1,200 +1,78 @@
 import {
-  type ChatAttachment,
   chatReducer,
   createConversation as createCoreConversation,
-  createMessage,
-  selectConversations,
   selectConversationMessages,
-  type ChatMessage,
+  selectConversations,
+  type ChatAction,
   type ChatState,
-  type Conversation,
   type ConversationId,
-  type RequestId
+  type RequestId,
+  type StreamEvent
 } from '@agent-chat/chat-core';
 import type { StreamSubscription } from '@agent-chat/chat-sdk';
-import { createId } from '@agent-chat/utils';
 import { create } from 'zustand';
 
-import { createConfiguredChatSdk } from '@/lib/chatSdk';
-
 interface ChatStore {
-  core: ChatState;
-  conversations: readonly Conversation[];
   activeConversationId?: ConversationId;
-  activeMessages: readonly ChatMessage[];
-  inputValue: string;
-  inputAttachments: readonly ChatAttachment[];
-  isSending: boolean;
   activeRequestId?: RequestId;
   activeSubscription?: StreamSubscription;
-  setInputValue(value: string): void;
-  setInputAttachments(attachments: readonly ChatAttachment[]): void;
-  createConversation(): void;
-  selectConversation(conversationId: ConversationId): void;
-  send(): void;
-  cancel(): void;
+  core: ChatState;
+  isSending: boolean;
+  applyAction(action: ChatAction): void;
+  applyStreamEvent(event: StreamEvent): void;
+  setActiveSubscription(subscription?: StreamSubscription, requestId?: RequestId): void;
+  setSending(isSending: boolean): void;
+  syncCore(core: ChatState): void;
 }
 
-const initialConversation = createCoreConversation({ title: 'Mobile conversation' });
+const initialConversation = createCoreConversation({ title: '数据审查 Agent' });
 const initialCore = chatReducer(undefined, {
-  type: 'conversation/create',
-  input: initialConversation
+  input: initialConversation,
+  type: 'conversation/create'
 });
 
 export const useChatStore = create<ChatStore>((set, get) => ({
-  core: initialCore,
-  conversations: selectConversations(initialCore),
   activeConversationId: initialCore.activeConversationId,
-  activeMessages:
-    initialCore.activeConversationId === undefined
-      ? []
-      : selectConversationMessages(initialCore, initialCore.activeConversationId),
-  inputValue: '',
-  inputAttachments: [],
+  core: initialCore,
   isSending: false,
 
-  setInputValue(value) {
-    set({ inputValue: value });
+  applyAction(action) {
+    const nextCore = chatReducer(get().core, action);
+    set(deriveChatState(nextCore));
   },
 
-  setInputAttachments(attachments) {
-    set({ inputAttachments: attachments });
-  },
-
-  createConversation() {
+  applyStreamEvent(event) {
     const nextCore = chatReducer(get().core, {
-      type: 'conversation/create',
-      input: {
-        title: '新对话'
-      }
+      event,
+      type: 'stream/apply'
     });
-    set(deriveState(nextCore, { inputValue: '', inputAttachments: [] }));
+    set(deriveChatState(nextCore));
   },
 
-  selectConversation(conversationId) {
-    const nextCore = chatReducer(get().core, {
-      type: 'conversation/set-active',
-      conversationId
-    });
-    set(deriveState(nextCore, { inputValue: '', inputAttachments: [] }));
+  setActiveSubscription(subscription, requestId) {
+    set({ activeRequestId: requestId, activeSubscription: subscription });
   },
 
-  send() {
-    const state = get();
-    const conversationId = state.activeConversationId;
-    const content = state.inputValue.trim();
-    const attachments = state.inputAttachments;
-
-    if (conversationId === undefined || (content.length === 0 && attachments.length === 0) || state.isSending) {
-      return;
-    }
-
-    const userMessage = createMessage({
-      conversationId,
-      role: 'user',
-      content,
-      attachments,
-      status: 'complete'
-    });
-
-    let nextCore = chatReducer(state.core, {
-      type: 'message/add',
-      input: userMessage
-    });
-    set(deriveState(nextCore, { inputValue: '', inputAttachments: [], isSending: true }));
-
-    try {
-      const sdk = createConfiguredChatSdk();
-      const subscription = sdk.sendMessage(
-        {
-          conversationId,
-          content,
-          attachments,
-          history: selectConversationMessages(nextCore, conversationId)
-        },
-        {
-          onEvent(event) {
-            const updatedCore = chatReducer(get().core, {
-              type: 'stream/apply',
-              event
-            });
-            set(deriveState(updatedCore));
-          },
-          onError(error) {
-            appendFrontendError(set, get(), conversationId, error.message);
-          },
-          onClose() {
-            set({ isSending: false, activeRequestId: undefined, activeSubscription: undefined });
-          }
-        }
-      );
-
-      nextCore = chatReducer(get().core, {
-        type: 'request/start',
-        conversationId,
-        requestId: subscription.requestId
-      });
-      set(deriveState(nextCore, { activeRequestId: subscription.requestId, activeSubscription: subscription }));
-    } catch (error) {
-      appendFrontendError(set, get(), conversationId, error instanceof Error ? error.message : String(error));
-    }
+  setSending(isSending) {
+    set({ isSending });
   },
 
-  cancel() {
-    const state = get();
-    if (state.activeConversationId === undefined || state.activeRequestId === undefined) {
-      return;
-    }
-
-    state.activeSubscription?.cancel('User cancelled request.');
-    const nextCore = chatReducer(state.core, {
-      type: 'stream/apply',
-      event: {
-        type: 'request_cancelled',
-        conversationId: state.activeConversationId,
-        requestId: state.activeRequestId
-      }
-    });
-    set(deriveState(nextCore, { activeRequestId: undefined, activeSubscription: undefined, isSending: false }));
+  syncCore(core) {
+    set(deriveChatState(core));
   }
 }));
 
-function deriveState(core: ChatState, extra: Partial<ChatStore> = {}): Partial<ChatStore> {
-  const activeConversationId = core.activeConversationId;
-
+export function deriveChatState(core: ChatState): Pick<ChatStore, 'activeConversationId' | 'core'> {
   return {
-    core,
-    conversations: selectConversations(core),
-    activeConversationId,
-    activeMessages:
-      activeConversationId === undefined ? [] : selectConversationMessages(core, activeConversationId),
-    ...extra
+    activeConversationId: core.activeConversationId,
+    core
   };
 }
 
-function appendFrontendError(
-  set: (partial: Partial<ChatStore>) => void,
-  state: ChatStore,
-  conversationId: ConversationId,
-  message: string
-): void {
-  const errorMessage = createMessage({
-    id: createId('msg'),
-    conversationId,
-    role: 'system',
-    content: message,
-    status: 'failed'
-  });
-  const nextCore = chatReducer(state.core, {
-    type: 'message/add',
-    input: errorMessage
-  });
+export function getActiveMessages(core: ChatState) {
+  return core.activeConversationId === undefined ? [] : selectConversationMessages(core, core.activeConversationId);
+}
 
-  set(
-    deriveState(nextCore, {
-      activeRequestId: undefined,
-      activeSubscription: undefined,
-      isSending: false
-    })
-  );
+export function getConversationList(core: ChatState) {
+  return selectConversations(core);
 }
