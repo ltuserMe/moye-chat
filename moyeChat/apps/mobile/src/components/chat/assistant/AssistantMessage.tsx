@@ -1,10 +1,11 @@
 import type { ReactElement } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import {
   MessagePrimitive,
   ActionBarPrimitive
 } from "@assistant-ui/react-native";
 import { Copy, RefreshCw } from "lucide-react-native";
+import { isImage, getFileIconSvg } from "@agent-chat/utils";
 
 import { assistantTheme as t } from "@/theme/assistant-theme";
 import { mobileTokens as tokens } from "@/components/chat/theme/tokens";
@@ -59,7 +60,30 @@ export function AssistantMessage({
         {/* 用户消息 */}
         {isUser ? (
           <View style={s.userBubble}>
-            <Text style={s.userText}>{userText}</Text>
+            {/* 附件内嵌在气泡里 */}
+            {(message as Part).attachments?.length > 0 ? (
+              <View style={s.attachmentGrid}>
+                {((message as Part).attachments as Part[]).map((rawAttachment, index) => {
+                  const att = normalizeMessageAttachment(rawAttachment, index);
+                  const img = isImage(att.mimeType);
+                  const iconUri = img ? null : getFileIconSvg(att.mimeType);
+                  if (img) {
+                    return (
+                      <View key={att.id} style={s.msgImage}>
+                        {att.url ? <Image source={{ uri: att.url }} style={s.msgThumb} /> : null}
+                      </View>
+                    );
+                  }
+                  return (
+                    <View key={att.id} style={s.msgFile}>
+                      {iconUri ? <Image source={{ uri: iconUri }} style={s.msgFileIcon} /> : null}
+                      <Text numberOfLines={1} style={s.msgFileName}>{att.name}</Text>
+                    </View>
+                  );
+                })}
+              </View>
+            ) : null}
+            {userText ? <Text style={s.userText}>{userText}</Text> : null}
           </View>
         ) : (
           /* AI 消息 */
@@ -108,6 +132,45 @@ export function AssistantMessage({
       </View>
     </MessagePrimitive.Root>
   );
+}
+
+function normalizeMessageAttachment(
+  attachment: Part,
+  index: number
+): {
+  id: string;
+  mimeType: string;
+  name: string;
+  url?: string;
+} {
+  const dataPart = ((attachment.content as Part[] | undefined) ?? []).find(
+    (part) => part?.type === "data" && part?.name === "attachment"
+  );
+  const data = dataPart?.data as Part | undefined;
+  const mimeType =
+    (attachment.mimeType as string | undefined) ??
+    (attachment.contentType as string | undefined) ??
+    (data?.mimeType as string | undefined) ??
+    inferMimeTypeFromAttachmentType(attachment.type as string | undefined);
+
+  return {
+    id: String((attachment.id as string | undefined) ?? data?.id ?? index),
+    mimeType,
+    name:
+      (attachment.name as string | undefined) ??
+      (attachment.filename as string | undefined) ??
+      (data?.name as string | undefined) ??
+      "附件",
+    url:
+      (attachment.url as string | undefined) ??
+      (data?.url as string | undefined)
+  };
+}
+
+function inferMimeTypeFromAttachmentType(type: string | undefined): string {
+  if (type === "image") return "image/*";
+  if (type === "audio") return "audio/*";
+  return "application/octet-stream";
 }
 
 /* ── 子组件 ── */
@@ -241,6 +304,21 @@ const s = {
     color: tokens.color.danger
   },
   statusPillTextMuted: {
+    color: tokens.color.textSecondary
+  },
+  // 附件
+  attachmentGrid: {
+    flexDirection: "row" as const,
+    flexWrap: "wrap" as const,
+    gap: 6,
+    marginBottom: tokens.spacing.sm
+  },
+  msgImage: { width: 60, height: 60, borderRadius: 8, overflow: "hidden" as const, marginBottom: 4 },
+  msgThumb: { width: "100%" as const, height: "100%" as const },
+  msgFile: { flexDirection: "row" as const, alignItems: "center" as const, gap: 6, marginBottom: 2, maxWidth: "100%" as const },
+  msgFileIcon: { width: 20, height: 20, flexShrink: 0 },
+  msgFileName: {
+    fontSize: 11,
     color: tokens.color.textSecondary
   }
 };

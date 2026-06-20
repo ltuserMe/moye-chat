@@ -103,8 +103,8 @@ function formatJsonValue(value: unknown): string {
 
 const styles = {
   panel: {
-    background: "#f8fafc",
-    borderLeft: "1px solid #e5e7eb",
+    background: "var(--bg-panel)",
+    borderLeft: "1px solid var(--border-medium)",
     display: "grid",
     gridTemplateRows: "auto minmax(0, 1fr)",
     minHeight: 0,
@@ -112,14 +112,14 @@ const styles = {
   },
   header: {
     alignItems: "center",
-    borderBottom: "1px solid #e5e7eb",
+    borderBottom: "1px solid var(--border-medium)",
     display: "flex",
     justifyContent: "space-between",
     padding: "18px 18px 14px"
   },
   titleRow: {
     alignItems: "center",
-    color: "#111827",
+    color: "var(--text-primary)",
     display: "flex",
     gap: 8
   },
@@ -134,10 +134,10 @@ const styles = {
     padding: 16
   },
   card: {
-    background: "#ffffff",
-    border: "1px solid #e2e8f0",
+    background: "var(--bg-sidebar)",
+    border: "1px solid var(--border-medium)",
     borderRadius: 8,
-    boxShadow: "0 8px 22px rgba(15,23,42,0.04)",
+    boxShadow: "var(--shadow-lg)",
     display: "grid",
     gap: 12,
     padding: 14
@@ -150,7 +150,7 @@ const styles = {
   },
   nameRow: {
     alignItems: "center",
-    color: "#0f172a",
+    color: "var(--text-primary)",
     display: "flex",
     gap: 8,
     minWidth: 0
@@ -165,7 +165,7 @@ const styles = {
     gap: 6
   },
   blockLabel: {
-    color: "#64748b",
+    color: "var(--text-muted)",
     fontSize: 11,
     fontWeight: 700
   },
@@ -175,10 +175,10 @@ const styles = {
     fontWeight: 700
   },
   code: {
-    background: "#f8fafc",
-    border: "1px solid #e2e8f0",
+    background: "var(--bg-panel)",
+    border: "1px solid var(--border-medium)",
     borderRadius: 6,
-    color: "#334155",
+    color: "var(--text-secondary)",
     fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
     fontSize: 11,
     lineHeight: 1.55,

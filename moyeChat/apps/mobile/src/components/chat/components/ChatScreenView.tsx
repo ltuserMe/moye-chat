@@ -80,7 +80,6 @@ export function ChatScreenView(props: ChatScreenViewProps): ReactElement {
       <AssistantThread
         bottomPadding={props.listBottomPadding}
         isSending={props.isSending === true}
-        onExamplePrompt={props.onInputChange}
       />
 
       {/* 底部输入区 — assistant-ui ComposerPrimitive */}
@@ -115,6 +114,8 @@ export function ChatScreenView(props: ChatScreenViewProps): ReactElement {
         onClose={props.onDrawerClose}
         onCreateConversation={props.onCreateConversation}
         onSelectConversation={props.onSelectConversation}
+        onDeleteConversation={props.onDeleteConversation}
+        onRenameConversation={props.onRenameConversation}
         open={props.isDrawerOpen}
       />
     </KeyboardAvoidingView>

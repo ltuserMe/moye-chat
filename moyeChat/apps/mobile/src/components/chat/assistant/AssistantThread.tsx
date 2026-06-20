@@ -1,6 +1,6 @@
 import type { ReactElement } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { ThreadPrimitive } from "@assistant-ui/react-native";
+import { ThreadPrimitive, useAui } from "@assistant-ui/react-native";
 
 import { assistantTheme as t } from "@/theme/assistant-theme";
 import { mobileTokens as tokens } from "@/components/chat/theme/tokens";
@@ -9,7 +9,6 @@ import { AssistantMessage } from "./AssistantMessage";
 interface AssistantThreadProps {
   bottomPadding: number;
   isSending: boolean;
-  onExamplePrompt(prompt: string): void;
 }
 
 /**
@@ -18,14 +17,19 @@ interface AssistantThreadProps {
  */
 export function AssistantThread({
   bottomPadding,
-  isSending,
-  onExamplePrompt
+  isSending
 }: AssistantThreadProps): ReactElement {
+  const aui = useAui();
+
   return (
     <ThreadPrimitive.Root style={[t.thread, { flex: 1, minWidth: 0 }]}>
       <ThreadPrimitive.Messages
         keyboardShouldPersistTaps="handled"
-        ListEmptyComponent={<EmptyState onPrompt={onExamplePrompt} />}
+        ListEmptyComponent={
+          <EmptyState
+            onPrompt={(prompt) => aui.composer().setText(prompt)}
+          />
+        }
         contentContainerStyle={{
           gap: tokens.spacing.xl,
           paddingBottom: bottomPadding

@@ -1,9 +1,14 @@
 "use client";
 
-import type { ChatMessage, ChatRole, MessageId } from "@agent-chat/chat-core";
+import type { ChatAttachment, ChatMessage, ChatRole, MessageId } from "@agent-chat/chat-core";
+import { isImage, getFileIconSvg } from "@agent-chat/utils";
 import { ActionIcon, Text } from "@lobehub/ui";
 import { ChatItem } from "@lobehub/ui/chat";
-import { AlertCircle, Ban, Check, Copy, Edit, Loader2, Redo, Trash } from "lucide-react";
+import {
+  AlertCircle, Ban, Check, Copy, Edit,
+  FileImage as FileImageIcon,
+  Loader2, Redo, Trash
+} from "lucide-react";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 
 interface MessageTimelineProps {
@@ -33,6 +38,8 @@ export function MessageTimeline({
   const scrollRef = useRef<HTMLDivElement>(null);
   const [copiedMessageId, setCopiedMessageId] = useState<MessageId>();
   const [editingMessageId, setEditingMessageId] = useState<MessageId>();
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => { setIsClient(true); }, []);
   const groups = useMemo(() => groupMessages(messages), [messages]);
 
   useEffect(() => {
@@ -48,7 +55,7 @@ export function MessageTimeline({
   }, [messages]);
 
   return (
-    <div ref={scrollRef} style={styles.scroll} suppressHydrationWarning>
+    <div ref={scrollRef} style={styles.scroll}>
       <div style={styles.inner}>
         {messages.length === 0 ? <EmptyState onExamplePrompt={onExamplePrompt} /> : null}
         {groups.map((group) => {
@@ -84,9 +91,18 @@ export function MessageTimeline({
                       ? { message: message.error ?? "生成出错", type: "error" }
                       : undefined
                   }
-                  key={message.id}
                   loading={message.status === "streaming" || message.status === "queued"}
                   message={message.content}
+                  renderMessage={
+                    message.role === "user" && message.attachments.length > 0
+                      ? (content: React.ReactNode) => (
+                          <div>
+                            <AttachmentCards attachments={message.attachments} />
+                            {content}
+                          </div>
+                        )
+                      : undefined
+                  }
                   messageExtra={message.status === "streaming" ? <span style={styles.cursor} /> : undefined}
                   onChange={(content) => {
                     onEditMessage?.(message.id, content);
@@ -102,7 +118,7 @@ export function MessageTimeline({
                     edit: "编辑",
                     title: roleMeta[message.role].label
                   }}
-                  time={new Date(message.updatedAt).getTime()}
+                  time={isClient ? new Date(message.updatedAt).getTime() : undefined}
                   variant="bubble"
                 />
               ))}
@@ -116,32 +132,36 @@ export function MessageTimeline({
 
 function MessageMeta({ message }: { message: ChatMessage }) {
   const status = getStatusMeta(message);
+  if (status === undefined) return null;
 
-  if (message.attachments.length === 0 && status === undefined) {
-    return null;
-  }
-
-  const StatusIcon = status?.icon;
+  const StatusIcon = status.icon;
 
   return (
     <div style={styles.messageMeta}>
-      {message.attachments.length > 0 ? (
-        <div style={styles.attachments}>
-          {message.attachments.map((attachment) => (
-            <span key={attachment.id} style={styles.attachment}>
-              {attachment.name}
-            </span>
-          ))}
-        </div>
-      ) : null}
-      {status !== undefined && StatusIcon !== undefined ? (
-        <span style={{ ...styles.status, ...status.style }}>
-          <StatusIcon size={12} style={message.status === "streaming" ? styles.spin : undefined} />
-          {status.label}
-        </span>
-      ) : null}
+      <span style={{ ...styles.status, ...status.style }}>
+        <StatusIcon size={12} style={message.status === "streaming" ? styles.spin : undefined} />
+        {status.label}
+      </span>
     </div>
   );
+}
+
+function AttachmentCards({ attachments }: { attachments: readonly ChatAttachment[] }) {
+  return attachments.map((attachment) => {
+    const img = isImage(attachment.mimeType);
+    const iconSvg = img ? null : getFileIconSvg(attachment.mimeType);
+    if (img) {
+      return attachment.url ? (
+        <img key={attachment.id} src={attachment.url} alt={attachment.name} style={styles.msgThumbnail} />
+      ) : null;
+    }
+    return (
+      <span key={attachment.id} style={styles.msgFileCard}>
+        {iconSvg ? <img src={iconSvg} alt="" style={styles.msgFileIcon} /> : null}
+        <span style={styles.msgFileName}>{attachment.name}</span>
+      </span>
+    );
+  }).filter(Boolean);
 }
 
 function getStatusMeta(message: ChatMessage) {
@@ -242,10 +262,10 @@ const styles = {
   },
   emptyPanel: {
     alignItems: "center",
-    background: "#ffffff",
-    border: "1px solid rgba(0,0,0,0.06)",
+    background: "var(--bg-sidebar)",
+    border: "1px solid var(--border-soft)",
     borderRadius: 24,
-    boxShadow: "0 12px 32px rgba(15,23,42,0.04)",
+    boxShadow: "var(--shadow-lg)",
     display: "grid",
     gap: 24,
     gridTemplateColumns: "220px minmax(0, 1fr)",
@@ -255,7 +275,7 @@ const styles = {
   },
   illustration: {
     background: "linear-gradient(180deg, #f8fafc, #eef6ff)",
-    border: "1px solid #e2e8f0",
+    border: "1px solid var(--border-medium)",
     borderRadius: 18,
     display: "grid",
     gap: 12,
@@ -293,7 +313,7 @@ const styles = {
     marginBottom: 8
   },
   emptyCopy: {
-    color: "#64748b",
+    color: "var(--text-muted)",
     lineHeight: 1.7,
     margin: "0 0 18px"
   },
@@ -303,10 +323,10 @@ const styles = {
     gap: 10
   },
   promptButton: {
-    background: "#f8fafc",
-    border: "1px solid #dbe3ef",
+    background: "var(--bg-panel)",
+    border: "1px solid var(--border-medium)",
     borderRadius: 999,
-    color: "#334155",
+    color: "var(--text-secondary)",
     transition: "all 0.2s ease",
     cursor: "pointer",
     padding: "8px 12px"
@@ -316,24 +336,14 @@ const styles = {
     display: "flex",
     gap: 4
   },
-  attachments: {
-    display: "flex",
-    flexWrap: "wrap" as const,
-    gap: 6,
-    marginTop: 8
-  },
+  msgThumbnail: { maxWidth: 240, maxHeight: 200, borderRadius: 8, marginBottom: 4, objectFit: "cover" as const },
+  msgFileIcon: { width: 20, height: 20, flexShrink: 0 },
+  msgFileCard: { display: "inline-flex" as const, alignItems: "center" as const, gap: 6, marginRight: 12 },
+  msgFileName: { fontSize: 13, color: "var(--text-primary)", overflow: "hidden" as const, textOverflow: "ellipsis" as const, whiteSpace: "nowrap" as const, maxWidth: 160 },
   messageMeta: {
     display: "grid",
     gap: 8,
     marginTop: 8
-  },
-  attachment: {
-    background: "#f1f5f9",
-    border: "1px solid #e2e8f0",
-    borderRadius: 8,
-    color: "#475569",
-    fontSize: 12,
-    padding: "4px 8px"
   },
   status: {
     alignItems: "center",
@@ -353,8 +363,8 @@ const styles = {
     color: "#b91c1c"
   },
   statusMuted: {
-    background: "#f1f5f9",
-    color: "#475569"
+    background: "var(--bg-input)",
+    color: "var(--text-muted)"
   },
   cursor: {
     animation: "moye-caret 1s steps(2, start) infinite",

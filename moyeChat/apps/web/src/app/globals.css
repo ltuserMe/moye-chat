@@ -1,22 +1,76 @@
 @import "tailwindcss";
 
+/* ── CSS 变量：亮色（默认）── */
 :root {
-  --background: #f7f8fa;
-  --foreground: #111827;
+  --bg-app: #f7f8fa;
+  --bg-chat: #f8f9fa;
+  --bg-sidebar: #ffffff;
+  --bg-main: #f8f9fa;
+  --bg-header: rgba(255, 255, 255, 0.75);
+  --bg-composer: #ffffff;
+  --bg-input: #f4f5f6;
+  --bg-bubble-user: #e8eaed;
+  --bg-panel: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-code: #1e1e1e;
+
+  --border-light: #ededed;
+  --border-medium: #e5e7eb;
+  --border-soft: rgba(0, 0, 0, 0.06);
+
+  --text-primary: #111827;
+  --text-secondary: #5f6368;
+  --text-muted: #80868b;
+  --text-inverse: #ffffff;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.02);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.04);
+
+  --accent: #000000;
+  --accent-blue: #4285f4;
+  --danger: #b91c1c;
+  --danger-bg: #fef2f2;
+}
+
+/* ── 暗色（data-theme="dark"）── */
+[data-theme="dark"] {
+  --bg-app: #0f0f0f;
+  --bg-chat: #1a1a1a;
+  --bg-sidebar: #141414;
+  --bg-main: #1a1a1a;
+  --bg-header: rgba(20, 20, 20, 0.85);
+  --bg-composer: #1e1e1e;
+  --bg-input: #2a2a2a;
+  --bg-bubble-user: #2a2a2a;
+  --bg-panel: #1a1a1a;
+  --bg-card: #222222;
+  --bg-code: #111111;
+
+  --border-light: #2a2a2a;
+  --border-medium: #333333;
+  --border-soft: rgba(255, 255, 255, 0.06);
+
+  --text-primary: #e5e5e5;
+  --text-secondary: #999999;
+  --text-muted: #666666;
+  --text-inverse: #0f0f0f;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.3);
+
+  --accent: #ffffff;
+  --accent-blue: #5b9cf5;
+  --danger: #ef4444;
+  --danger-bg: #2d1b1b;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-background: var(--bg-app);
+  --color-foreground: var(--text-primary);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #111827;
-    --foreground: #f9fafb;
-  }
 }
 
 * {
@@ -29,8 +83,8 @@ body {
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--bg-app);
+  color: var(--text-primary);
   margin: 0;
   overflow: hidden;
 }
@@ -41,63 +95,34 @@ textarea {
   font: inherit;
 }
 
+/* ── 动画 ── */
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
-
 @keyframes pulse {
-  0%,
-  100% {
-    opacity: 0.25;
-  }
-
-  50% {
-    opacity: 1;
-  }
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 1; }
 }
-
 @keyframes moye-spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
-
 @keyframes moye-caret {
-  0%,
-  45% {
-    opacity: 1;
-  }
-
-  46%,
-  100% {
-    opacity: 0;
-  }
+  0%, 45% { opacity: 1; }
+  46%, 100% { opacity: 0; }
 }
 
+/* ── 响应式 ── */
 @media (max-width: 860px) {
   .moye-chat-shell {
     grid-template-columns: minmax(0, 1fr) !important;
   }
-
   .moye-chat-sidebar {
     display: none !important;
   }
-
   .moye-chat-main {
     grid-template-rows: 64px minmax(0, 1fr) auto !important;
   }
-
-  .moye-chat-content {
-    grid-template-columns: minmax(0, 1fr) !important;
-  }
-
-  .moye-chat-composer {
-    padding: 0 12px 12px !important;
-  }
 }
-
 @media (max-width: 560px) {
   .moye-chat-composer-shell {
     border-radius: 14px !important;

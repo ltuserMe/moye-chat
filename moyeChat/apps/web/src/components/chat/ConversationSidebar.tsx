@@ -267,8 +267,8 @@ function downloadFile(filename: string, content: string, mimeType: string): void
 
 const styles = {
   sidebar: {
-    background: "#ffffff",
-    borderRight: "1px solid rgba(0,0,0,0.06)",
+    background: "var(--bg-sidebar)",
+    borderRight: "1px solid var(--border-soft)",
     display: "grid",
     gridTemplateRows: "auto auto minmax(0, 1fr)",
     minHeight: 0,
@@ -284,7 +284,7 @@ const styles = {
     alignItems: "center",
     background: "#111827",
     borderRadius: 10,
-    color: "#ffffff",
+    color: "var(--text-inverse)",
     display: "flex",
     fontSize: 18,
     fontWeight: 800,
@@ -293,13 +293,13 @@ const styles = {
     width: 38
   },
   brandTitle: {
-    color: "#111827",
+    color: "var(--text-primary)",
     fontSize: 16,
     fontWeight: 750,
     letterSpacing: 0
   },
   brandMeta: {
-    color: "#64748b",
+    color: "var(--text-muted)",
     fontSize: 12,
     marginTop: 2
   },
@@ -310,7 +310,7 @@ const styles = {
   },
   search: {
     alignItems: "center",
-    background: "#f1f5f9",
+    background: "var(--bg-input)",
     border: "1px solid transparent",
     borderRadius: 10,
     display: "flex",
@@ -321,7 +321,7 @@ const styles = {
   searchInput: {
     background: "transparent",
     border: 0,
-    color: "#111827",
+    color: "var(--text-primary)",
     minWidth: 0,
     outline: 0,
     width: "100%"
@@ -338,7 +338,7 @@ const styles = {
     background: "transparent",
     border: "none",
     borderRadius: 10,
-    color: "#334155",
+    color: "var(--text-secondary)",
     cursor: "pointer",
     display: "grid",
     gap: 7,
@@ -353,8 +353,8 @@ const styles = {
     }
   },
   itemActive: {
-    background: "#f1f5f9",
-    color: "#0f172a"
+    background: "var(--bg-input)",
+    color: "var(--text-primary)"
   },
   itemHeader: {
     alignItems: "center",
@@ -380,7 +380,7 @@ const styles = {
     transition: "opacity 0.2s ease"
   },
   preview: {
-    color: "#64748b",
+    color: "var(--text-muted)",
     fontSize: 13,
     lineHeight: 1.45,
     overflow: "hidden",
@@ -388,7 +388,7 @@ const styles = {
     whiteSpace: "nowrap" as const
   },
   itemMeta: {
-    color: "#94a3b8",
+    color: "var(--text-muted)",
     fontSize: 11
   }
 };

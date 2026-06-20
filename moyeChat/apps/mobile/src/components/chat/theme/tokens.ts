@@ -1,3 +1,6 @@
+import type { ThemeMode } from "@agent-chat/utils";
+import { resolveThemeMode } from "@agent-chat/utils";
+
 export const mobileTokens = {
   color: {
     app: "#f4f5f6",
@@ -47,3 +50,38 @@ export const mobileTokens = {
     small: { fontSize: 11 }
   }
 };
+
+/** 暗色模式 Token */
+export const darkTokens = {
+  ...mobileTokens,
+  color: {
+    ...mobileTokens.color,
+    app: "#111111",
+    chat: "#1a1a1a",
+    input: "#2a2a2a",
+    inputMuted: "#222222",
+    border: "#333333",
+    text: "#e5e5e5",
+    textSecondary: "#999999",
+    textMuted: "#666666",
+    accent: "#ffffff",
+    userBubble: "#2a2a2a",
+    dangerBg: "#2d1b1b"
+  },
+  shadow: {
+    bottom: {
+      elevation: 12,
+      shadowColor: "#000000",
+      shadowOffset: { width: 0, height: -4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 24
+    }
+  }
+};
+
+/**
+ * 根据系统暗色偏好解析主题 Token
+ */
+export function resolveTokens(systemPrefersDark: boolean) {
+  return systemPrefersDark ? darkTokens : mobileTokens;
+}

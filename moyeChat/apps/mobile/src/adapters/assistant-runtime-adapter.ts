@@ -105,20 +105,30 @@ export function createStreamAdapter(
         ? extractText(lastUserMsg.content)
         : "";
 
-      if (content.length === 0) {
+      // 先拿附件
+      const attachmentStore = useAttachmentStore.getState();
+      const attachments = attachmentStore.inputAttachments;
+      const prepared = await prepareAttachmentsForSend(attachments);
+
+      // 文字和附件都为空才跳过
+      if (content.length === 0 && prepared.length === 0) {
         yield { content: [{ type: "text", text: "" }] };
         return;
       }
 
+      if (prepared.length > 0) {
+        attachmentStore.clearInputAttachments();
+      }
+
       // 模拟模式回退
       if (isSimulationMode()) {
-        yield* simulateResponse(content);
+        const attachNames = prepared.map((r) => r.attachment.name).join("、");
+        const attachInfo = attachNames ? `\n\n📎 已收到文件: ${attachNames}` : "";
+        yield* simulateResponse(content + attachInfo);
         return;
       }
 
       const sdk = createConfiguredChatSdk();
-      const attachments = useAttachmentStore.getState().inputAttachments;
-      const prepared = await prepareAttachmentsForSend(attachments);
       const history = toChatHistory(messages);
 
       // 创建 AbortController 用于取消

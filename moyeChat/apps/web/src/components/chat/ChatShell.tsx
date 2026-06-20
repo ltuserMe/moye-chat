@@ -1,17 +1,33 @@
 "use client";
 
 import type { ConversationId } from "@agent-chat/chat-core";
+import { type ThemeMode } from "@agent-chat/utils";
 import { ActionIcon, Tag } from "@lobehub/ui";
 import { Drawer, Select } from "antd";
-import { Settings } from "lucide-react";
+import { Settings, Moon, Sun, Monitor } from "lucide-react";
 import { useMemo, useState } from "react";
 
+import { useThemeMode } from "@/hooks/useThemeMode";
 import { ChatComposer } from "./Composer";
 import { ConversationSidebar } from "./ConversationSidebar";
 import { MessageTimeline } from "./MessageTimeline";
 import type { ChatShellProps } from "./types";
 
+const THEME_CYCLE: ThemeMode[] = ["light", "dark", "system"];
+const ThemeIcon = {
+  light: Sun,
+  dark: Moon,
+  system: Monitor
+} as const;
+const ThemeTitle = {
+  light: "浅色模式",
+  dark: "深色模式",
+  system: "跟随系统"
+} as const;
+
 export function ChatShell(props: ChatShellProps) {
+  const { mode: themeMode, setMode: setThemeMode } = useThemeMode();
+  const NextIcon = ThemeIcon[themeMode];
   const [settingsOpen, setSettingsOpen] = useState(false);
   const activeConversation = props.conversations.find(
     (conversation) => conversation.id === props.activeConversationId
@@ -41,6 +57,14 @@ export function ChatShell(props: ChatShellProps) {
           </div>
           <div style={styles.headerRight}>
             <Tag color={props.isSending ? "blue" : "green"}>{props.isSending ? "生成中" : "就绪"}</Tag>
+            <ActionIcon
+              icon={NextIcon}
+              onClick={() => {
+                const idx = THEME_CYCLE.indexOf(themeMode);
+                setThemeMode(THEME_CYCLE[(idx + 1) % THEME_CYCLE.length]);
+              }}
+              title={ThemeTitle[themeMode]}
+            />
             <ActionIcon
               icon={Settings}
               onClick={() => setSettingsOpen(true)}
@@ -116,7 +140,7 @@ const styles = {
     height: "100dvh",
     minWidth: 0,
     overflow: "hidden",
-    background: "#ffffff" // 全局纯净白底
+    background: "var(--bg-sidebar)" // 全局纯净白底
   },
   main: {
     display: "grid",
@@ -126,22 +150,22 @@ const styles = {
   },
   header: {
     alignItems: "center",
-    background: "rgba(255,255,255,0.75)",
+    background: "var(--bg-header)",
     backdropFilter: "blur(16px)", // 增加毛玻璃效果
     WebkitBackdropFilter: "blur(16px)",
-    borderBottom: "1px solid #e5e7eb",
+    borderBottom: "1px solid var(--border-medium)",
     display: "flex",
     justifyContent: "space-between",
     padding: "0 28px",
     zIndex: 10
   },
   title: {
-    color: "#111827",
+    color: "var(--text-primary)",
     fontSize: 17,
     fontWeight: 760
   },
   subtitle: {
-    color: "#6b7280",
+    color: "var(--text-muted)",
     fontSize: 12,
     marginTop: 2
   },
@@ -156,15 +180,15 @@ const styles = {
     marginBottom: 22
   },
   settingsLabel: {
-    color: "#111827",
+    color: "var(--text-primary)",
     fontSize: 13,
     fontWeight: 650
   },
   settingsMeta: {
-    background: "#f8fafc",
-    border: "1px solid #e2e8f0",
+    background: "var(--bg-panel)",
+    border: "1px solid var(--border-medium)",
     borderRadius: 10,
-    color: "#475569",
+    color: "var(--text-muted)",
     fontSize: 13,
     lineHeight: 1.6,
     padding: 12

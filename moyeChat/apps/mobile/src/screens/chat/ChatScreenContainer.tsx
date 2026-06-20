@@ -2,7 +2,7 @@ import type { ConversationId } from '@agent-chat/chat-core';
 import { ChatScreenView } from '@/components/chat';
 import { AssistantRuntimeProvider } from '@assistant-ui/react-native';
 import type { ReactElement } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useChatController } from '@/hooks/useChatController';
@@ -21,7 +21,6 @@ export function ChatScreenContainer({
   );
   const globalError = useUiStore((state) => state.globalError);
   const isOffline = useUiStore((state) => state.isOffline);
-  const isScreenLoading = useUiStore((state) => state.isScreenLoading);
   const setGlobalError = useUiStore((state) => state.setGlobalError);
 
   return (
@@ -36,11 +35,6 @@ export function ChatScreenContainer({
             onAction={() => setGlobalError(undefined)}
             tone="error"
           />
-        ) : null}
-        {isScreenLoading ? (
-          <View pointerEvents="none" style={styles.loading}>
-            <ActivityIndicator color={tokens.color.accent} />
-          </View>
         ) : null}
       </SafeAreaView>
     </AssistantRuntimeProvider>
@@ -71,15 +65,6 @@ function StatusBanner({
 }
 
 const styles = StyleSheet.create({
-  loading: {
-    alignItems: 'center',
-    bottom: 0,
-    justifyContent: 'center',
-    left: 0,
-    position: 'absolute',
-    right: 0,
-    top: 0
-  },
   banner: {
     alignItems: 'center',
     borderRadius: tokens.radius.md,

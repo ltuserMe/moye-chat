@@ -1,22 +1,20 @@
 import type { ReactElement } from "react";
-import {
-  Pressable,
-  ScrollView,
-  Text,
-  View
-} from "react-native";
+import { useCallback, useEffect, useRef } from "react";
+import { Pressable, ScrollView, View } from "react-native";
 import {
   ComposerPrimitive,
+  type CreateAttachment,
+  useAui,
   useAuiState
 } from "@assistant-ui/react-native";
 import { Mic, Plus, Send, Square } from "lucide-react-native";
+import type { ChatAttachment } from "@agent-chat/chat-core";
 
 import { assistantTheme as t } from "@/theme/assistant-theme";
 import { mobileTokens as tokens } from "@/components/chat/theme/tokens";
 import type { QuickPrompt } from "@/components/chat/types";
 import { ActionPanel } from "@/components/chat/components/ActionPanel";
-import { AttachmentRail } from "@/components/chat/components/AttachmentRail";
-import type { ChatAttachment } from "@agent-chat/chat-core";
+import { AssistantAttachmentRail } from "./AssistantAttachmentRail";
 
 interface AssistantComposerProps {
   actionPanelOpen: boolean;
@@ -29,16 +27,9 @@ interface AssistantComposerProps {
   onAction(actionId: string): void;
   onActionPanelToggle(): void;
   onAttachmentsChange(attachments: readonly ChatAttachment[]): void;
-  onInputChange?(value: string): void;
   onMicPress?(): void;
 }
 
-/**
- * assistant-ui ComposerPrimitive 包装
- *
- * ComposerPrimitive.Input + Send 处理文本输入和发送
- * 保留: Mic 按钮, QuickPromptChips, ActionPanel, AttachmentRail
- */
 export function AssistantComposer({
   actionPanelOpen,
   actions,
@@ -52,12 +43,75 @@ export function AssistantComposer({
   onAttachmentsChange,
   onMicPress
 }: AssistantComposerProps): ReactElement {
+  const aui = useAui();
   const composerText = useAuiState((s) => s.composer.text);
+  const composerAttachments = useAuiState((s) => s.composer.attachments);
   const hasInput = composerText.trim().length > 0 || attachments.length > 0;
+  const sentAttachmentIdsRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    const currentIds = new Set(
+      attachments.map((attachment) => String(attachment.id))
+    );
+    for (const id of sentAttachmentIdsRef.current) {
+      if (!currentIds.has(id)) {
+        sentAttachmentIdsRef.current.delete(id);
+      }
+    }
+  }, [attachments]);
+
+  useEffect(() => {
+    const nextAttachments = attachments.filter(
+      (attachment) => !sentAttachmentIdsRef.current.has(String(attachment.id))
+    );
+    const nextSignature = getAttachmentSignature(nextAttachments);
+    const composerSignature = getAttachmentSignature(composerAttachments);
+
+    if (nextSignature === composerSignature) {
+      return;
+    }
+
+    void (async () => {
+      await aui.composer().clearAttachments();
+      await Promise.all(
+        nextAttachments.map((attachment) =>
+          aui.composer().addAttachment(toComposerAttachment(attachment))
+        )
+      );
+    })();
+  }, [attachments, aui, composerAttachments]);
+
+  const handleSendPress = useCallback(async () => {
+    const composerIds = new Set(
+      composerAttachments.map((attachment) => String(attachment.id))
+    );
+
+    if (attachments.length > 0) {
+      sentAttachmentIdsRef.current = new Set(
+        attachments.map((attachment) => String(attachment.id))
+      );
+    }
+
+    await Promise.all(
+      attachments
+        .filter((attachment) => !composerIds.has(String(attachment.id)))
+        .map((attachment) =>
+          aui.composer().addAttachment(toComposerAttachment(attachment))
+        )
+    );
+
+    aui.composer().send();
+  }, [attachments, aui, composerAttachments]);
 
   return (
     <>
-      {/* 快速提示 chips */}
+      {/* 附件预览 — 输入框上方 */}
+      <AssistantAttachmentRail
+        attachments={attachments}
+        onChange={onAttachmentsChange}
+      />
+
+      {/* 快速提示 */}
       {!isTiny && quickPrompts.length > 0 ? (
         <ScrollView
           horizontal
@@ -71,11 +125,11 @@ export function AssistantComposer({
               key={prompt.label}
               style={({ pressed }) => [
                 t.toolChip,
-                pressed && { backgroundColor: tokens.color.inputMuted }
+                pressed && { opacity: 0.5 }
               ]}
             >
-              <Text style={t.toolChipIcon}>{prompt.icon}</Text>
-              <Text style={t.toolChipText}>{prompt.label}</Text>
+              <ComposerText style={t.toolChipIcon}>{prompt.icon}</ComposerText>
+              <ComposerText style={t.toolChipText}>{prompt.label}</ComposerText>
             </Pressable>
           ))}
         </ScrollView>
@@ -84,14 +138,13 @@ export function AssistantComposer({
       {/* 输入区域 */}
       <ComposerPrimitive.Root style={t.composer}>
         <View style={t.inputBar}>
-          {/* + 按钮 */}
           <Pressable
             accessibilityRole="button"
             onPress={onActionPanelToggle}
             style={({ pressed }) => [
               t.plusButton,
               actionPanelOpen && { backgroundColor: "#e0e0e0" },
-              pressed && { backgroundColor: tokens.color.userBubble }
+              pressed && { opacity: 0.5 }
             ]}
           >
             <View
@@ -99,15 +152,10 @@ export function AssistantComposer({
                 transform: [{ rotate: actionPanelOpen ? "45deg" : "0deg" }]
               }}
             >
-              <Plus
-                color={tokens.color.textSecondary}
-                size={20}
-                strokeWidth={2.2}
-              />
+              <Plus color={tokens.color.textSecondary} size={20} strokeWidth={2.2} />
             </View>
           </Pressable>
 
-          {/* 输入框 */}
           <ComposerPrimitive.Input
             multiline
             placeholder={compact ? "输入指令" : "输入指令..."}
@@ -115,43 +163,29 @@ export function AssistantComposer({
             style={t.input}
           />
 
-          {/* 右侧按钮: 有输入显示发送/停止, 无输入显示麦克风 */}
           <View style={s.rightActions}>
             {hasInput || isSending ? (
               isSending ? (
-                /* 停止按钮 — 发送中 */
                 <ComposerPrimitive.Cancel style={t.sendButton}>
-                  <Square
-                    color="#ffffff"
-                    fill="#ffffff"
-                    size={12}
-                    strokeWidth={2.2}
-                  />
+                  <Square color="#ffffff" fill="#ffffff" size={12} strokeWidth={2.2} />
                 </ComposerPrimitive.Cancel>
               ) : (
-                /* 发送按钮 */
-                <ComposerPrimitive.Send style={t.sendButton}>
-                  <Send
-                    color="#ffffff"
-                    fill="#ffffff"
-                    size={14}
-                    strokeWidth={2.2}
-                  />
-                </ComposerPrimitive.Send>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => void handleSendPress()}
+                  style={t.sendButton}
+                >
+                  <Send color="#ffffff" fill="#ffffff" size={14} strokeWidth={2.2} />
+                </Pressable>
               )
             ) : (
-              /* 麦克风按钮 — 输入为空 */
               <Pressable
                 accessibilityLabel="语音输入"
                 accessibilityRole="button"
                 onPress={onMicPress}
-                style={s.micButton}
+                style={({ pressed }) => [s.micButton, pressed && { opacity: 0.5 }]}
               >
-                <Mic
-                  color={tokens.color.textMuted}
-                  size={20}
-                  strokeWidth={2.2}
-                />
+                <Mic color={tokens.color.textMuted} size={20} strokeWidth={2.2} />
               </Pressable>
             )}
           </View>
@@ -165,14 +199,53 @@ export function AssistantComposer({
         open={actionPanelOpen}
         onAction={onAction as any}
       />
-
-      {/* 附件栏 */}
-      <AttachmentRail
-        attachments={attachments}
-        onChange={onAttachmentsChange}
-      />
     </>
   );
+}
+
+function getAttachmentSignature(
+  attachments: readonly { id: unknown }[]
+): string {
+  return attachments
+    .map((attachment) => String(attachment.id))
+    .sort()
+    .join("|");
+}
+
+function toComposerAttachment(attachment: ChatAttachment): CreateAttachment {
+  const type = attachment.mimeType.startsWith("image/") ? "image" : "document";
+
+  return {
+    id: attachment.id,
+    type,
+    name: attachment.name,
+    contentType: attachment.mimeType,
+    content: [
+      {
+        type: "data",
+        name: "attachment",
+        data: {
+          id: attachment.id,
+          mimeType: attachment.mimeType,
+          name: attachment.name,
+          size: attachment.size,
+          url: attachment.url
+        }
+      }
+    ]
+  };
+}
+
+// Inline Text helper (avoids import of ThemedText)
+function ComposerText({
+  children,
+  style
+}: {
+  children: string;
+  style: object;
+}): ReactElement {
+  const { Text: RNText } = require("react-native");
+  return <RNText style={style}>{children}</RNText>;
 }
 
 const s = {
