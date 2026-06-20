@@ -66,8 +66,9 @@ export const useChatStore = create<ChatStore>()(
       }
     }),
     {
-      name: 'moye-chat-mobile',
+      name: 'moye-chat-mobile-v2',
       storage: createJSONStorage(() => AsyncStorage),
+      version: 1,
       partialize: (state) => ({
         core: state.core,
         activeConversationId: state.activeConversationId

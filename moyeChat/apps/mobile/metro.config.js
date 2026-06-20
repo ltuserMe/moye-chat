@@ -13,4 +13,9 @@ config.resolver.nodeModulesPaths = [
 ];
 config.resolver.disableHierarchicalLookup = false;
 
+// assistant-ui 的可选云服务依赖，此 scaffold 不使用
+config.resolver.extraNodeModules = {
+  'assistant-cloud': path.resolve(projectRoot, 'stubs/assistant-cloud'),
+};
+
 module.exports = config;

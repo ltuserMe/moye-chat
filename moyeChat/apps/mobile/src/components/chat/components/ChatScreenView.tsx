@@ -1,25 +1,45 @@
 import { Menu, Plus } from "lucide-react-native";
 import type { ReactElement } from "react";
-import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  View
+} from "react-native";
 
 import { mobileTokens as tokens } from "../theme/tokens";
 import type { ChatScreenViewProps, ComposerAction } from "../types";
-import { Composer } from "./Composer";
 import { ConversationDrawer } from "./ConversationDrawer";
-import { MessageList } from "./MessageList";
+import { AssistantThread } from "../assistant/AssistantThread";
+import { AssistantComposer } from "../assistant/AssistantComposer";
 
 const composerActions: readonly ComposerAction[] = [
-    { id: "camera", label: "拍摄" },
+  { id: "camera", label: "拍摄" },
   { id: "image", label: "相册" },
-  { id: "file", label: "文件" },
-
+  { id: "file", label: "文件" }
 ];
 
+/**
+ * ChatScreen 纯布局组件
+ *
+ * assistant-ui 负责:  Thread (消息列表) + Composer (输入区)
+ * 自定义组件保持:  Header, Dynamic Island, ConversationDrawer
+ *
+ * 无业务逻辑 — 所有状态/回调通过 props 传入
+ */
 export function ChatScreenView(props: ChatScreenViewProps): ReactElement {
-  const activeConversation = props.conversations.find((conversation) => conversation.id === props.activeConversationId);
+  const activeConversation = props.conversations.find(
+    (c) => c.id === props.activeConversationId
+  );
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.root}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      style={styles.root}
+    >
+      {/* Dynamic Island — AI 思考中 */}
       {props.isSending ? (
         <View style={styles.dynamicIsland}>
           <View style={styles.islandDot} />
@@ -27,46 +47,68 @@ export function ChatScreenView(props: ChatScreenViewProps): ReactElement {
         </View>
       ) : null}
 
+      {/* Header */}
       <View style={styles.header}>
-        <Pressable accessibilityRole="button" onPress={props.onDrawerOpen} style={({ pressed }) => [styles.iconButton, pressed && styles.iconButtonPressed]}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={props.onDrawerOpen}
+          style={({ pressed }) => [
+            styles.iconButton,
+            pressed && styles.iconButtonPressed
+          ]}
+        >
           <Menu color={tokens.color.text} size={20} strokeWidth={2.2} />
         </Pressable>
-        <Text numberOfLines={1} style={styles.title}>{activeConversation?.title ?? "Agent Chat"}</Text>
-        <Pressable accessibilityRole="button" onPress={props.onCreateConversation} style={({ pressed }) => [styles.iconButton, pressed && styles.iconButtonPressed]}>
+
+        <Text numberOfLines={1} style={styles.title}>
+          {activeConversation?.title ?? "Agent Chat"}
+        </Text>
+
+        <Pressable
+          accessibilityRole="button"
+          onPress={props.onCreateConversation}
+          style={({ pressed }) => [
+            styles.iconButton,
+            pressed && styles.iconButtonPressed
+          ]}
+        >
           <Plus color={tokens.color.text} size={20} strokeWidth={2.2} />
         </Pressable>
       </View>
 
-      <MessageList
+      {/* 消息列表 — assistant-ui ThreadPrimitive */}
+      <AssistantThread
         bottomPadding={props.listBottomPadding}
-        compact={props.isCompact}
-        messages={props.messages}
-        onDrag={props.onMessageListDrag}
+        isSending={props.isSending === true}
         onExamplePrompt={props.onInputChange}
-        showStreaming={props.isSending === true}
       />
 
-      <View onLayout={(event) => props.onBottomLayout(Math.ceil(event.nativeEvent.layout.height))} style={[styles.bottomArea, props.isCompact && styles.bottomAreaCompact]}>
-        <Composer
+      {/* 底部输入区 — assistant-ui ComposerPrimitive */}
+      <View
+        onLayout={(event) =>
+          props.onBottomLayout(Math.ceil(event.nativeEvent.layout.height))
+        }
+        style={[
+          styles.bottomArea,
+          props.isCompact && styles.bottomAreaCompact
+        ]}
+      >
+        <AssistantComposer
           actionPanelOpen={props.actionPanelOpen}
           actions={composerActions}
           attachments={props.attachments}
           compact={props.isCompact}
-          inputHeight={props.inputHeight}
           isSending={props.isSending}
           isTiny={props.isTiny}
+          quickPrompts={props.quickPrompts}
           onAction={props.onComposerAction}
           onActionPanelToggle={props.onActionPanelToggle}
           onAttachmentsChange={props.onAttachmentsChange}
-          onContentSizeChange={props.onInputContentSizeChange}
-          onInputChange={props.onInputChange}
           onMicPress={props.onMicPress}
-          onSend={props.onSend}
-          quickPrompts={props.quickPrompts}
-          value={props.inputValue}
         />
       </View>
 
+      {/* 对话抽屉 — 自定义组件保持不变 */}
       <ConversationDrawer
         activeConversationId={props.activeConversationId}
         conversations={props.conversations}
@@ -140,22 +182,12 @@ const styles = StyleSheet.create({
   },
   bottomArea: {
     ...tokens.shadow.bottom,
-    backgroundColor: "rgba(255,255,255,0.85)",
-    borderTopColor: "rgba(0,0,0,0.05)",
-    borderTopWidth: StyleSheet.hairlineWidth,
     bottom: 0,
-    gap: tokens.spacing.sm,
     left: 0,
-    paddingBottom: Platform.OS === "ios" ? 32 : 16,
-    paddingHorizontal: tokens.spacing.md,
-    paddingTop: tokens.spacing.sm,
     position: "absolute",
     right: 0
   },
   bottomAreaCompact: {
-    gap: 6,
-    paddingBottom: Platform.OS === "ios" ? 18 : 8,
-    paddingHorizontal: tokens.spacing.sm,
-    paddingTop: tokens.spacing.sm
+    /* AssistantComposer 内部处理 compact 样式 */
   }
 });

@@ -1,10 +1,12 @@
 import type { ConversationId } from '@agent-chat/chat-core';
 import { ChatScreenView } from '@/components/chat';
+import { AssistantRuntimeProvider } from '@assistant-ui/react-native';
 import type { ReactElement } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useChatController } from '@/hooks/useChatController';
+import { useAssistantRuntime } from '@/hooks/useAssistantRuntime';
 import { useUiStore } from '@/stores/ui-store';
 import { tokens } from '@/theme/tokens';
 
@@ -14,29 +16,34 @@ export function ChatScreenContainer({
   conversationId?: ConversationId;
 }): ReactElement {
   const chat = useChatController(conversationId);
+  const runtime = useAssistantRuntime(
+    conversationId ?? ('' as ConversationId)
+  );
   const globalError = useUiStore((state) => state.globalError);
   const isOffline = useUiStore((state) => state.isOffline);
   const isScreenLoading = useUiStore((state) => state.isScreenLoading);
   const setGlobalError = useUiStore((state) => state.setGlobalError);
 
   return (
-    <SafeAreaView edges={['top', 'left', 'right']} style={{ flex: 1 }}>
-      <ChatScreenView {...chat} />
-      {isOffline ? <StatusBanner tone="warning" label="当前离线，消息会等待重试。" /> : null}
-      {globalError ? (
-        <StatusBanner
-          actionLabel="知道了"
-          label={globalError}
-          onAction={() => setGlobalError(undefined)}
-          tone="error"
-        />
-      ) : null}
-      {isScreenLoading ? (
-        <View pointerEvents="none" style={styles.loading}>
-          <ActivityIndicator color={tokens.color.accent} />
-        </View>
-      ) : null}
-    </SafeAreaView>
+    <AssistantRuntimeProvider runtime={runtime}>
+      <SafeAreaView edges={['top', 'left', 'right']} style={{ flex: 1 }}>
+        <ChatScreenView {...chat} />
+        {isOffline ? <StatusBanner tone="warning" label="当前离线，消息会等待重试。" /> : null}
+        {globalError ? (
+          <StatusBanner
+            actionLabel="知道了"
+            label={globalError}
+            onAction={() => setGlobalError(undefined)}
+            tone="error"
+          />
+        ) : null}
+        {isScreenLoading ? (
+          <View pointerEvents="none" style={styles.loading}>
+            <ActivityIndicator color={tokens.color.accent} />
+          </View>
+        ) : null}
+      </SafeAreaView>
+    </AssistantRuntimeProvider>
   );
 }
 
