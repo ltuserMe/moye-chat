@@ -1,5 +1,5 @@
 import type { ConversationId } from '@agent-chat/chat-core';
-import { ChatScreenView } from '@agent-chat/ui-mobile';
+import { ChatScreenView } from '@/components/chat';
 import type { ReactElement } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';

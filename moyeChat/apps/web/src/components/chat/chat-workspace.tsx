@@ -1,6 +1,6 @@
 "use client";
 
-import { ChatShell } from "@agent-chat/ui-web";
+import { ChatShell } from "@/components/chat";
 
 import { useChatStore } from "@/stores/chat-store";
 

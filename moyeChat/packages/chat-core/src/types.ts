@@ -62,6 +62,7 @@ export interface ChatState {
   messages: Record<MessageId, ChatMessage>;
   activeConversationId?: ConversationId;
   requestIdsByConversation: Record<ConversationId, RequestId | undefined>;
+  tags: Record<ConversationId, string[]>;
 }
 
 export interface CreateConversationInput {
@@ -156,4 +157,6 @@ export type ChatAction =
   | { type: "message/update"; input: UpdateMessageInput }
   | { type: "stream/apply"; event: StreamEvent }
   | { type: "request/start"; conversationId: ConversationId; requestId: RequestId }
-  | { type: "request/finish"; conversationId: ConversationId; requestId: RequestId };
+  | { type: "request/finish"; conversationId: ConversationId; requestId: RequestId }
+  | { type: "conversation/tag-add"; conversationId: ConversationId; tag: string }
+  | { type: "conversation/tag-remove"; conversationId: ConversationId; tag: string };

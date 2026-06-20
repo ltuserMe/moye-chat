@@ -29,6 +29,8 @@ export interface StreamEventHandlers {
   onError?(error: Error): void;
   onOpen?(): void;
   onClose?(): void;
+  onRetry?(context: StreamRetryContext): void;
+  onStatusChange?(status: StreamConnectionStatus): void;
 }
 
 export interface StreamSubscription {
@@ -48,6 +50,33 @@ export interface ChatSdk {
 
 export type EventDecoder = (raw: string, eventName?: string) => StreamEvent | StreamEvent[] | undefined;
 
+export type StreamConnectionPhase = "connecting" | "open" | "retrying" | "closed";
+
+export interface StreamConnectionStatus {
+  phase: StreamConnectionPhase;
+  requestId: RequestId;
+  attempt: number;
+  lastEventId?: string;
+  error?: Error;
+  nextRetryDelayMs?: number;
+}
+
+export interface StreamRetryContext {
+  requestId: RequestId;
+  attempt: number;
+  maxAttempts: number;
+  delayMs: number;
+  error: Error;
+  lastEventId?: string;
+}
+
+export interface StreamRetryPolicy {
+  maxAttempts: number;
+  baseDelayMs: number;
+  maxDelayMs: number;
+  jitterRatio: number;
+}
+
 export interface FetchSseTransportOptions {
   endpoint: string | URL;
   method?: "POST" | "PUT";
@@ -56,6 +85,8 @@ export interface FetchSseTransportOptions {
   body?: (payload: ChatRequestPayload) => BodyInit;
   decodeEvent?: EventDecoder;
   fetch?: typeof fetch;
+  idleTimeoutMs?: number;
+  retry?: false | Partial<StreamRetryPolicy>;
 }
 
 export interface StreamEnvelope {

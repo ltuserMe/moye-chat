@@ -45,18 +45,6 @@
       "tags": ["runtime"]
     },
     {
-      "packageName": "@agent-chat/ui-web",
-      "projectFolder": "packages/ui-web",
-      "reviewCategory": "production",
-      "tags": ["ui-web"]
-    },
-    {
-      "packageName": "@agent-chat/ui-mobile",
-      "projectFolder": "packages/ui-mobile",
-      "reviewCategory": "production",
-      "tags": ["ui-mobile"]
-    },
-    {
       "packageName": "@agent-chat/types",
       "projectFolder": "packages/types",
       "reviewCategory": "production",

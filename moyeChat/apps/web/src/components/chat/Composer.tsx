@@ -1,6 +1,7 @@
 "use client";
 
 import type { ChatAttachment } from "@agent-chat/chat-core";
+import { createId } from "@agent-chat/utils";
 import {
   PaperAirplaneIcon,
   PaperClipIcon,
@@ -9,7 +10,7 @@ import {
 import { FileText, Search, Sparkles, Wrench } from "lucide-react";
 import { useEffect, useRef } from "react";
 
-import type { ChatModelOption } from "../types";
+import type { ChatModelOption } from "./types";
 
 const quickPrompts = [
   { icon: Sparkles, label: "优化当前 UI 方案" },
@@ -65,7 +66,7 @@ export function ChatComposer(props: ChatComposerProps) {
     }
 
     const nextAttachments = Array.from(files).map((file) => ({
-      id: createAttachmentId(),
+      id: createId("att") as ChatAttachment["id"],
       name: file.name,
       mimeType: file.type || "application/octet-stream",
       size: file.size,
@@ -187,15 +188,6 @@ export function ChatComposer(props: ChatComposerProps) {
       </div>
     </footer>
   );
-}
-
-function createAttachmentId(): ChatAttachment["id"] {
-  const random =
-    typeof crypto !== "undefined" && "randomUUID" in crypto
-      ? crypto.randomUUID()
-      : Math.random().toString(36).slice(2);
-
-  return `att_${random}` as ChatAttachment["id"];
 }
 
 const styles = {

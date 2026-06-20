@@ -70,6 +70,35 @@ export function chatReducer(state: ChatState = createInitialChatState(), action:
     case "stream/apply":
       return applyStreamEvent(state, action.event);
 
+    case "conversation/tag-add": {
+      const existing = state.tags[action.conversationId] ?? [];
+      if (existing.includes(action.tag)) {
+        return state;
+      }
+      return {
+        ...state,
+        tags: {
+          ...state.tags,
+          [action.conversationId]: [...existing, action.tag]
+        }
+      };
+    }
+
+    case "conversation/tag-remove": {
+      const existing = state.tags[action.conversationId];
+      if (existing === undefined) {
+        return state;
+      }
+      const next = existing.filter((t) => t !== action.tag);
+      return {
+        ...state,
+        tags: {
+          ...state.tags,
+          [action.conversationId]: next
+        }
+      };
+    }
+
     default:
       return state;
   }
@@ -192,12 +221,16 @@ function deleteConversation(state: ChatState, conversationId: Conversation["id"]
       ? Object.values(conversations).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0]?.id
       : state.activeConversationId;
 
+  const tags = { ...state.tags };
+  delete tags[conversationId];
+
   return {
     ...state,
     activeConversationId: nextActiveConversationId,
     conversations,
     messages,
-    requestIdsByConversation
+    requestIdsByConversation,
+    tags
   };
 }
 

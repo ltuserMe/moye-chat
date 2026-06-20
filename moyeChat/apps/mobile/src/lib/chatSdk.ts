@@ -10,7 +10,13 @@ export function createConfiguredChatSdk() {
 
   return createChatSdk({
     transport: new FetchSseTransport({
-      endpoint
+      endpoint,
+      idleTimeoutMs: 45_000,
+      retry: {
+        baseDelayMs: 600,
+        maxAttempts: 5,
+        maxDelayMs: 8_000
+      }
     })
   });
 }

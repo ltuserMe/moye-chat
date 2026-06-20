@@ -9,7 +9,7 @@ import { useMemo, useState } from "react";
 import { ChatComposer } from "./Composer";
 import { ConversationSidebar } from "./ConversationSidebar";
 import { MessageTimeline } from "./MessageTimeline";
-import type { ChatShellProps } from "../types";
+import type { ChatShellProps } from "./types";
 
 export function ChatShell(props: ChatShellProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -104,8 +104,8 @@ export function ChatShell(props: ChatShellProps) {
 }
 
 function estimateTokens(content: string): number {
-  const chineseCharacters = content.match(/[\u4e00-\u9fff]/g)?.length ?? 0;
-  const words = content.replace(/[\u4e00-\u9fff]/g, " ").match(/[A-Za-z0-9_]+/g)?.length ?? 0;
+  const chineseCharacters = content.match(/[一-鿿]/g)?.length ?? 0;
+  const words = content.replace(/[一-鿿]/g, " ").match(/[A-Za-z0-9_]+/g)?.length ?? 0;
   return Math.ceil(chineseCharacters + words * 1.35);
 }
 

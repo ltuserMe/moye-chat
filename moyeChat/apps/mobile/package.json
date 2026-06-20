@@ -5,8 +5,10 @@
   "dependencies": {
     "@agent-chat/chat-core": "workspace:*",
     "@agent-chat/chat-sdk": "workspace:*",
-    "@agent-chat/ui-mobile": "workspace:*",
     "@agent-chat/utils": "workspace:*",
+    "@react-native-async-storage/async-storage": "^2.0.0",
+    "lucide-react-native": "~1.21.0",
+    "react-native-svg": "~15.15.5",
     "@expo/ui": "~56.0.18",
     "@microsoft/fetch-event-source": "^2.0.1",
     "expo": "~56.0.12",

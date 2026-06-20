@@ -48,7 +48,7 @@ export function MessageTimeline({
   }, [messages]);
 
   return (
-    <div ref={scrollRef} style={styles.scroll}>
+    <div ref={scrollRef} style={styles.scroll} suppressHydrationWarning>
       <div style={styles.inner}>
         {messages.length === 0 ? <EmptyState onExamplePrompt={onExamplePrompt} /> : null}
         {groups.map((group) => {
@@ -237,7 +237,7 @@ const styles = {
     display: "grid",
     gap: 18,
     margin: "0 auto",
-    maxWidth: 860, // 收紧聊天区最大宽度，提升阅读体验
+    maxWidth: 860,
     padding: "28px 32px 36px"
   },
   emptyPanel: {

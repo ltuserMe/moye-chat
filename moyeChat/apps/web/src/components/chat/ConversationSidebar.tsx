@@ -3,10 +3,11 @@
 import type { ConversationId } from "@agent-chat/chat-core";
 import { ActionIcon, Button, Tag } from "@lobehub/ui";
 import { Dropdown, Input, Modal } from "antd";
-import { MessageSquarePlus, MoreHorizontal, Pencil, Search, Trash } from "lucide-react";
-import { useMemo, useState } from "react";
+import { MessageSquarePlus, MoreHorizontal, Pencil, Search, Trash, Download, FileJson } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
-import type { ConversationListItem } from "../types";
+import type { ConversationListItem } from "./types";
+import { useChatStore } from "@/stores/chat-store";
 
 interface ConversationSidebarProps {
   activeConversationId?: ConversationId;
@@ -99,6 +100,17 @@ export function ConversationSidebar(props: ConversationSidebarProps) {
                         label: "重命名"
                       },
                       {
+                        key: "export-markdown",
+                        icon: <Download size={14} />,
+                        label: "导出 Markdown"
+                      },
+                      {
+                        key: "export-json",
+                        icon: <FileJson size={14} />,
+                        label: "导出 JSON"
+                      },
+                      { type: "divider" as const },
+                      {
                         danger: true,
                         key: "delete",
                         icon: <Trash size={14} />,
@@ -110,6 +122,18 @@ export function ConversationSidebar(props: ConversationSidebarProps) {
                       if (key === "rename") {
                         setEditingConversation(conversation);
                         setDraftTitle(conversation.title);
+                        return;
+                      }
+
+                      if (key === "export-markdown") {
+                        const content = useChatStore.getState().exportConversation(conversation.id, "markdown");
+                        if (content) downloadFile(`${conversation.title}.md`, content, "text/markdown");
+                        return;
+                      }
+
+                      if (key === "export-json") {
+                        const content = useChatStore.getState().exportConversation(conversation.id, "json");
+                        if (content) downloadFile(`${conversation.title}.json`, content, "application/json");
                         return;
                       }
 
@@ -141,7 +165,7 @@ export function ConversationSidebar(props: ConversationSidebarProps) {
                 {conversation.lastMessageRole === undefined ? "暂无消息" : `${roleLabel[conversation.lastMessageRole]} · `}
                 {conversation.lastMessagePreview ?? "开始一次新的协作"}
               </span>
-              <span style={styles.itemMeta}>{formatRelativeTime(conversation.updatedAt)}</span>
+              <span style={styles.itemMeta} suppressHydrationWarning><RelativeTime value={conversation.updatedAt} /></span>
             </div>
           );
         })}
@@ -177,9 +201,34 @@ export function ConversationSidebar(props: ConversationSidebarProps) {
   );
 }
 
-function formatRelativeTime(value: string): string {
+function RelativeTime({ value }: { value: string }): React.ReactElement {
+  const [now, setNow] = useState(0);
+
+  useEffect(() => {
+    setNow(Date.now());
+  }, []);
+
+  // 服务端渲染时，返回绝对日期避免 hydration 不匹配
+  if (now === 0) {
+    const result = formatAbsolute(value);
+    return <>{result}</>;
+  }
+
+  return <>{formatRelative(value, now)}</>;
+}
+
+function formatAbsolute(value: string): string {
   const timestamp = new Date(value).getTime();
-  const diff = Date.now() - timestamp;
+  if (Number.isNaN(timestamp)) return "";
+  return new Intl.DateTimeFormat("zh-CN", {
+    month: "2-digit",
+    day: "2-digit"
+  }).format(new Date(value));
+}
+
+function formatRelative(value: string, now: number): string {
+  const timestamp = new Date(value).getTime();
+  const diff = now - timestamp;
   const minute = 60 * 1000;
   const hour = 60 * minute;
   const day = 24 * hour;
@@ -204,6 +253,16 @@ function formatRelativeTime(value: string): string {
     month: "2-digit",
     day: "2-digit"
   }).format(new Date(value));
+}
+
+function downloadFile(filename: string, content: string, mimeType: string): void {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
 }
 
 const styles = {

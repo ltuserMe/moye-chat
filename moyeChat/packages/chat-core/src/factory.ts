@@ -12,7 +12,8 @@ export function createInitialChatState(): ChatState {
   return {
     conversations: {},
     messages: {},
-    requestIdsByConversation: {}
+    requestIdsByConversation: {},
+    tags: {}
   };
 }
 

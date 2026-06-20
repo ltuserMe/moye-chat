@@ -1,1 +1,1 @@
-export { mobileTokens as tokens } from '@agent-chat/ui-mobile';
+export { mobileTokens as tokens } from '@/components/chat/theme/tokens';

@@ -96,7 +96,12 @@ export async function sendMessage(input: {
         history: selectConversationMessages(nextCore, input.conversationId)
       },
       {
+        onOpen() {
+          useUiStore.getState().setOffline(false);
+          useUiStore.getState().setGlobalError(undefined);
+        },
         onClose() {
+          useUiStore.getState().setOffline(false);
           useChatStore.getState().setSending(false);
           useChatStore.getState().setActiveSubscription(undefined, undefined);
         },
@@ -105,6 +110,17 @@ export async function sendMessage(input: {
         },
         onEvent(event) {
           useChatStore.getState().applyStreamEvent(event);
+        },
+        onRetry(context) {
+          useUiStore.getState().setOffline(true);
+          useUiStore
+            .getState()
+            .setGlobalError(`网络不稳定，正在第 ${context.attempt}/${context.maxAttempts} 次重连...`);
+        },
+        onStatusChange(status) {
+          if (status.phase === 'open') {
+            useUiStore.getState().setOffline(false);
+          }
         }
       }
     );
